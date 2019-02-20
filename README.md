@@ -15,7 +15,8 @@ spark.sql("select name,time,indicator from log")
           "password" -> "root",
           "dbtable" -> "test",
           "useSSL" -> "false",
-          "duplicateIncs" -> "indicator"
+          "duplicateIncs" -> "indicator",
+          "showSql" -> "true"
         )
       ).save()
 ```

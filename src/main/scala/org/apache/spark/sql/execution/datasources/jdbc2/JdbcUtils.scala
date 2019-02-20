@@ -132,18 +132,21 @@ object JdbcUtils extends Logging {
 
     mode match {
       case JDBCSaveMode.Update =>
-        val duplicateIncs = options.asProperties
+        val props = options.asProperties
+        val duplicateIncs = props
           .getProperty(JDBCOptions.JDBC_DUPLICATE_INCS, "")
           .split(",")
           .filter { x => StringUtils.isNotBlank(x) }
-          .map { x => s"`$x`"}
+          .map { x => s"`$x`" }
         val duplicateSetting = rddSchema
           .fields
           .map { x => dialect.quoteIdentifier(x.name) }
           .map { name => if (duplicateIncs.contains(name)) s"$name=$name+?" else s"$name=?" }
           .mkString(",")
         val sql = s"INSERT INTO $table ($columns) VALUES ($placeholders) ON DUPLICATE KEY UPDATE $duplicateSetting"
-        println(s"${JDBCSaveMode.Update} => sql => $sql")
+        if (props.getProperty("showSql", "false").equals("true")) {
+          println(s"${JDBCSaveMode.Update} => sql => $sql")
+        }
         sql
       case _ => s"INSERT INTO $table ($columns) VALUES ($placeholders)"
     }
