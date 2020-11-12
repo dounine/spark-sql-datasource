@@ -4,6 +4,10 @@ object JDBCSaveMode extends Enumeration {
 
   type JDBCSaveMode = Value
 
-  val Append, Overwrite, ErrorIfExists, Ignore, Update = Value
+  val Append = Value("Append")
+  val Overwrite = Value("Overwrite")
+  val ErrorIfExists = Value("ErrorIfExists")
+  val Ignore = Value("Ignore")
+  val Update = Value("Update")
 
 }
