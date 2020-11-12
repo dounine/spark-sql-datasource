@@ -28,3 +28,12 @@ if option duplicateIncs unset will be create the follow sql
 ```
 INSERT INTO test (`name`,`time`,`indicator`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE `name`=?,`time`=?,`indicator`=?
 ```
+## Package
+install to local maven
+```
+gradle clean build publishToMavenLocal
+```
+install to maven central
+```
+gradle clean build push
+```
