@@ -1,0 +1,7 @@
+target/
+.bloop/
+.gradle/
+.metals/
+.vscode/
+build/
+.scalafmt.conf
