@@ -1,7 +1,5 @@
 ![](https://github.com/dounine/spark-sql-datasource/workflows/Publish%20package%20to%20the%20Maven%20Central%20Repository/badge.svg)
 
-#Spark-sql-datasource jdbc2
-
 ## Demo
 ```
 spark.sql("select name,time,indicator from log")
