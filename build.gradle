@@ -66,8 +66,8 @@ publishing {
             def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
             url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
             credentials {
-                username NEXUS_USERNAME
-                password NEXUS_PASSWORD
+                username System.getenv("MAVEN_USERNAME")
+                password System.getenv("MAVEN_PASSWORD")
             }
         }
     }
