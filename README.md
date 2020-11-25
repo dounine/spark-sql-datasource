@@ -1,6 +1,17 @@
 ![](https://github.com/dounine/spark-sql-datasource/workflows/Publish%20package%20to%20the%20Maven%20Central%20Repository/badge.svg)
 
-## Demo
+## Useage
+Depend on
+```
+<dependency>
+    <groupId>com.dounine</groupId>
+    <artifactId>spark-sql-datasource</artifactId>
+    <version>1.0.4</version>
+</dependency>
+
+```
+
+example
 ```
 spark.sql("select name,time,indicator from log")
       .write
@@ -26,13 +37,4 @@ INSERT INTO test (`name`,`time`,`indicator`) VALUES (?,?,?) ON DUPLICATE KEY UPD
 if option duplicateIncs unset will be create the follow sql
 ```
 INSERT INTO test (`name`,`time`,`indicator`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE `name`=?,`time`=?,`indicator`=?
-```
-## Package
-install to local maven
-```
-gradle clean build publishToMavenLocal
-```
-install to maven central
-```
-gradle clean build push
 ```
