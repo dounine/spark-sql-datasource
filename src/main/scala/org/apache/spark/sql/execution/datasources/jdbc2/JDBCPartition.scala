@@ -8,10 +8,10 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.jdbc.{JdbcDialect, JdbcDialects}
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types._
-import org.apache.spark.util.CompletionIterator
+import org.apache.spark.util.{CompletionIterator, TaskCompletionListener}
 import org.apache.spark.{InterruptibleIterator, Partition, SparkContext, TaskContext}
-import scala.collection.JavaConversions._
 
+import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
 
 /**
@@ -28,7 +28,6 @@ object JDBCRDD extends Logging {
     * schema.
     *
     * @param options - JDBC options that contains url, table and other information.
-    *
     * @return A StructType giving the table's Catalyst schema.
     * @throws SQLException if the table specification is garbage.
     * @throws SQLException if the table contains an unsupported type.
@@ -58,9 +57,8 @@ object JDBCRDD extends Logging {
   /**
     * Prune all but the specified columns from the specified Catalyst schema.
     *
-    * @param schema - The Catalyst schema of the master table
+    * @param schema  - The Catalyst schema of the master table
     * @param columns - The list of desired columns
-    *
     * @return A Catalyst schema corresponding to columns in the given order.
     */
   private def pruneSchema(schema: StructType, columns: Array[String]): StructType = {
@@ -119,14 +117,13 @@ object JDBCRDD extends Logging {
   /**
     * Build and return JDBCRDD from the given information.
     *
-    * @param sc - Your SparkContext.
-    * @param schema - The Catalyst schema of the underlying database table.
+    * @param sc              - Your SparkContext.
+    * @param schema          - The Catalyst schema of the underlying database table.
     * @param requiredColumns - The names of the columns to SELECT.
-    * @param filters - The filters to include in all WHERE clauses.
-    * @param parts - An array of JDBCPartitions specifying partition ids and
-    *    per-partition WHERE clauses.
-    * @param options - JDBC options that contains url, table and other information.
-    *
+    * @param filters         - The filters to include in all WHERE clauses.
+    * @param parts           - An array of JDBCPartitions specifying partition ids and
+    *                        per-partition WHERE clauses.
+    * @param options         - JDBC options that contains url, table and other information.
     * @return An RDD representing "SELECT requiredColumns FROM fqTable".
     */
   def scanTable(
@@ -157,14 +154,14 @@ object JDBCRDD extends Logging {
   * needs to fetch the schema while the workers need to fetch the data.
   */
 private[jdbc2] class JDBCRDD(
-                             sc: SparkContext,
-                             getConnection: () => Connection,
-                             schema: StructType,
-                             columns: Array[String],
-                             filters: Array[Filter],
-                             partitions: Array[Partition],
-                             url: String,
-                             options: JDBCOptions)
+                              sc: SparkContext,
+                              getConnection: () => Connection,
+                              schema: StructType,
+                              columns: Array[String],
+                              filters: Array[Filter],
+                              partitions: Array[Partition],
+                              url: String,
+                              options: JDBCOptions)
   extends RDD[InternalRow](sc, Nil) {
 
   /**
@@ -248,13 +245,17 @@ private[jdbc2] class JDBCRDD(
       closed = true
     }
 
-    context.addTaskCompletionListener{ context => close() }
+    context.addTaskCompletionListener(new TaskCompletionListener {
+      override def onTaskCompletion(context: TaskContext): Unit = {
+        close()
+      }
+    })
 
     val inputMetrics = context.taskMetrics().inputMetrics
     val part = thePart.asInstanceOf[JDBCPartition]
     conn = getConnection()
     val dialect = JdbcDialects.get(url)
-    dialect.beforeFetch(conn, options.asProperties.toMap)
+    dialect.beforeFetch(conn, options.asProperties.asScala.toMap)
 
     // This executes a generic SQL statement (or PL/SQL block) before reading
     // the table/query via JDBC. Use this feature to initialize the database

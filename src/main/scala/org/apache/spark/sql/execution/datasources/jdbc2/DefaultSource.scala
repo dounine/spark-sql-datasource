@@ -1,5 +1,7 @@
 package org.apache.spark.sql.execution.datasources.jdbc2
 
+import java.sql.Connection
+
 import org.apache.spark.sql.execution.datasources.jdbc2.JDBCOptions._
 import org.apache.spark.sql.execution.datasources.jdbc2.JdbcUtils._
 import org.apache.spark.sql.sources.{BaseRelation, CreatableRelationProvider, DataSourceRegister, RelationProvider}
@@ -10,8 +12,8 @@ class DefaultSource extends CreatableRelationProvider with RelationProvider with
   override def shortName(): String = "jdbc2"
 
   override def createRelation(
-      sqlContext: SQLContext,
-      parameters: Map[String, String]): BaseRelation = {
+                               sqlContext: SQLContext,
+                               parameters: Map[String, String]): BaseRelation = {
 
     val jdbcOptions = new JDBCOptions(parameters)
     val partitionColumn = jdbcOptions.partitionColumn
@@ -35,31 +37,33 @@ class DefaultSource extends CreatableRelationProvider with RelationProvider with
   }
 
   override def createRelation(
-      sqlContext: SQLContext,
-      mode: SaveMode,
-      parameters: Map[String, String],
-      df: DataFrame): BaseRelation = {
+                               sqlContext: SQLContext,
+                               mode: SaveMode,
+                               parameters: Map[String, String],
+                               df: DataFrame): BaseRelation = {
     val options = new JDBCOptions(parameters)
     val isCaseSensitive = sqlContext.conf.caseSensitiveAnalysis
 
-    var saveMode = mode match {
+    var saveMode: JDBCSaveMode.Value = mode match {
       case SaveMode.Overwrite => JDBCSaveMode.Overwrite
       case SaveMode.Append => JDBCSaveMode.Append
       case SaveMode.ErrorIfExists => JDBCSaveMode.ErrorIfExists
       case SaveMode.Ignore => JDBCSaveMode.Ignore
     }
-    val parameterLower = parameters.map(kv => (kv._1.toLowerCase,kv._2))
-    if(parameterLower.keySet.contains("savemode")){
-      saveMode = if(parameterLower("savemode").equals(JDBCSaveMode.Update.toString)) JDBCSaveMode.Update else saveMode
+    val parameterLower: Map[String, String] = parameters.map(kv => (kv._1.toLowerCase, kv._2))
+    saveMode = if (parameterLower.keySet.contains("savemode")) {
+      if (parameterLower("savemode").toLowerCase == JDBCSaveMode.Update.toString.toLowerCase) JDBCSaveMode.Update else saveMode
+    } else {
+      saveMode
     }
 
-    val conn = JdbcUtils.createConnectionFactory(options)()
+    val conn: Connection = JdbcUtils.createConnectionFactory(options)()
     try {
-      val tableExists = JdbcUtils.tableExists(conn, options)
+      val tableExists: Boolean = JdbcUtils.tableExists(conn, options)
       if (tableExists) {
         saveMode match {
           case JDBCSaveMode.Overwrite =>
-            if (options.isTruncate && isCascadingTruncateTable(options.url) == Some(false)) {
+            if (options.isTruncate && isCascadingTruncateTable(options.url).contains(false)) {
               // In this case, we should truncate table and then load.
               truncateTable(conn, options)
               val tableSchema = JdbcUtils.getSchemaOption(conn, options)
@@ -84,9 +88,9 @@ class DefaultSource extends CreatableRelationProvider with RelationProvider with
               s"Table or view '${options.table}' already exists. SaveMode: ErrorIfExists.")
 
           case JDBCSaveMode.Ignore =>
-            // With `SaveMode.Ignore` mode, if table already exists, the save operation is expected
-            // to not save the contents of the DataFrame and to not change the existing data.
-            // Therefore, it is okay to do nothing here and then just return the relation below.
+          // With `SaveMode.Ignore` mode, if table already exists, the save operation is expected
+          // to not save the contents of the DataFrame and to not change the existing data.
+          // Therefore, it is okay to do nothing here and then just return the relation below.
         }
       } else {
         createTable(conn, df, options)
