@@ -1,4 +1,4 @@
-![](https://github.com/dounine/spark-sql-datasource/workflows/Publish%20package%20to%20the%20Maven%20Central%20Repository/badge.svg)
+![](https://github.com/dounine/spark-sql-datasource/workflows/Publish%20package%20to%20the%20Maven%20Central%20Repository/badge.svg) ![](https://img.shields.io/github/license/dounine/spark-sql-datasource)
 
 ## Useage
 Depend on
