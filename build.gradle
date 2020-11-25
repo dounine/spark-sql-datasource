@@ -55,7 +55,7 @@ publishing {
                 scm {
                     connection = 'scm:git:git://github.com/dounine/spark-sql-datasource.git'
                     developerConnection = 'scm:git:ssh://github.com/dounine/spark-sql-datasource.git'
-                    url = 'https://github.com/dounine/scala-filebeat'
+                    url = 'https://github.com/dounine/spark-sql-datasource'
                 }
             }
         }
